@@ -9,7 +9,7 @@ class ConfigTest(unittest.TestCase):
     def test_defaults_apply_without_a_file(self):
         settings = config.load(Path('/nonexistent/macvm.toml'))
         self.assertEqual(settings.volume, Path('/Volumes/MacVM'))
-        self.assertEqual(settings.bundle, Path('/Volumes/WD/lody-vm.sparsebundle'))
+        self.assertEqual(settings.bundle, Path('/Volumes/WD/macvm.sparsebundle'))
         self.assertEqual(settings.base, 'macos-27.2')
         self.assertEqual(settings.xcode, Path('/Applications/Xcode.app'))
         self.assertEqual((settings.cpu, settings.memory, settings.display), (6, 16, '1680x1050'))

@@ -6,7 +6,7 @@ import tomllib
 
 @dataclass(frozen=True)
 class Settings:
-    bundle: Path = Path('/Volumes/WD/lody-vm.sparsebundle')
+    bundle: Path = Path('/Volumes/WD/macvm.sparsebundle')
     volume: Path = Path('/Volumes/MacVM')
     base: str = 'macos-27.2'
     ipsw: str = 'UniversalMac_27.2_26B123_Restore.ipsw'

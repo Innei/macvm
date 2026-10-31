@@ -11,7 +11,7 @@ uv tool install --editable ~/git/innei-repo/macvm
 Needs Apple silicon, Python 3.11+, [Tart](https://github.com/cirruslabs/tart) on `PATH`, and an APFS sparse bundle for the VM disks:
 
 ```sh
-hdiutil create -size 200g -type SPARSEBUNDLE -fs APFS -volname MacVM /Volumes/WD/lody-vm.sparsebundle
+hdiutil create -size 200g -type SPARSEBUNDLE -fs APFS -volname MacVM /Volumes/WD/macvm.sparsebundle
 ```
 
 ## Global settings
@@ -19,7 +19,7 @@ hdiutil create -size 200g -type SPARSEBUNDLE -fs APFS -volname MacVM /Volumes/WD
 `~/.config/macvm/config.toml` (or `$MACVM_CONFIG`). Every key is optional:
 
 ```toml
-bundle = "/Volumes/WD/lody-vm.sparsebundle"   # sparse bundle holding VMs, IPSW, archives
+bundle = "/Volumes/WD/macvm.sparsebundle"   # sparse bundle holding VMs, IPSW, archives
 volume = "/Volumes/MacVM"                     # where it mounts
 base = "macos-27.2"
 xcode = "/Applications/Xcode.app"             # copied into the base; host builds use it too
