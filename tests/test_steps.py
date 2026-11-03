@@ -6,7 +6,7 @@ import unittest
 from macvm import steps
 
 SCRIPTS = {'system': 'a', 'screen-sharing': 'b', 'services': 'c', 'tools': 'd', 'grants': 'e', 'desktop': 'f',
-           'runtime': 'g', 'first-launch': 'h'}
+           'runtime': 'g', 'first-launch': 'h', 'tcc-bypass': 'i'}
 
 
 class FingerprintTest(unittest.TestCase):
@@ -19,8 +19,9 @@ class FingerprintTest(unittest.TestCase):
     def test_nothing_is_stale_when_nothing_changed(self):
         self.assertEqual(steps.stale(self.current(), self.current()), [])
 
-    def test_a_new_xcode_reruns_its_runtime_and_first_launch(self):
-        self.assertEqual(steps.stale(self.current(), self.current(build='27C10')), ['xcode', 'runtime', 'first-launch'])
+    def test_a_new_xcode_reruns_its_runtime_guest_bypass_and_first_launch(self):
+        self.assertEqual(steps.stale(self.current(), self.current(build='27C10')),
+                         ['xcode', 'runtime', 'tcc-bypass', 'first-launch'])
 
     def test_a_new_sdk_reruns_only_the_runtime(self):
         self.assertEqual(steps.stale(self.current(), self.current(sdk='27.2')), ['runtime'])
@@ -32,7 +33,8 @@ class FingerprintTest(unittest.TestCase):
         self.assertEqual(steps.stale({}, self.current()), steps.ORDER)
 
     def test_forced_steps_bring_their_dependents(self):
-        self.assertEqual(steps.stale(self.current(), self.current(), force=['xcode']), ['xcode', 'runtime', 'first-launch'])
+        self.assertEqual(steps.stale(self.current(), self.current(), force=['xcode']),
+                         ['xcode', 'runtime', 'tcc-bypass', 'first-launch'])
 
 
 class PlanTest(unittest.TestCase):

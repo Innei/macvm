@@ -26,6 +26,7 @@ from .rfb import RFB
 from .guest import (SETTINGS, BASE, BASE_LOCK, SLOTS_LOCK, GUEST_PASSWORD, GUEST_USER, HISTORY, VOLUME, Alive, Guest, attempt, build,
                       collect, exclusive, progress, run_tests, stage, tart, vms)
 from . import status as vm_status
+from . import tcc
 from .vnc import hold
 
 IDLE_SECONDS = SETTINGS.idle_minutes * 60
@@ -378,8 +379,11 @@ def reset():
 
 def keep(vnc_port):
     progress(f'keeper {os.getpid()} starting {RUNNER}')
+    directories = shares()
+    for directory in directories.values():
+        directory.mkdir(parents=True, exist_ok=True)
     log = TART_LOG.open('w')
-    guest = Guest(RUNNER, shares(), log)
+    guest = Guest(RUNNER, directories, log)
 
     def interrupt(signum, frame):
         raise KeyboardInterrupt
@@ -428,11 +432,16 @@ def up(args):
         if free:
             ensure()
             keeper = launch(args)
+            guest = Guest.attach(RUNNER, SimpleNamespace(name=str(TART_LOG)), keeper)
+            guest.boot()
+            tcc.apply(guest, args.tcc_bypass)
     if not free:
+        if getattr(args, 'tcc_override', False):
+            raise SystemExit('cannot change TCC mode while the runner is busy; retry after the test run')
         keeper = launch(args)
+        guest = Guest.attach(RUNNER, SimpleNamespace(name=str(TART_LOG)), keeper)
+        guest.boot()
     MARKER.touch()
-    guest = Guest.attach(RUNNER, SimpleNamespace(name=str(TART_LOG)), keeper)
-    guest.boot()
     progress(VNC.read_text().strip())
     return guest
 

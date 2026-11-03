@@ -1,8 +1,8 @@
 import hashlib
 import json
 
-ORDER = ['system', 'xcode', 'runtime', 'screen-sharing', 'services', 'tools', 'grants', 'desktop', 'first-launch']
-DEPENDS = {'runtime': ['xcode'], 'first-launch': ['xcode']}
+ORDER = ['system', 'xcode', 'runtime', 'screen-sharing', 'services', 'tools', 'tcc-bypass', 'grants', 'desktop', 'first-launch']
+DEPENDS = {'runtime': ['xcode'], 'tcc-bypass': ['xcode'], 'first-launch': ['xcode']}
 
 
 def digest(text):

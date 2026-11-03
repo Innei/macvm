@@ -56,6 +56,7 @@ paths = ["~/Library/Containers/com.example.notes"]
 
 [grants]
 targets = ["com.example.notes"]               # automation clients may send it Apple events
+bypass = false                                # true: temporarily bypass TCC for every guest process
 [grants.apps]
 "com.example.notes" = []                      # e.g. ["camera", "notifications"]; [] starts undetermined
 ```
@@ -84,13 +85,27 @@ macvm exec -- peekaboo see --app Notes --path /tmp/notes.png
 
 ## The base
 
-`prepare` runs named steps and records each step's fingerprint in `runs/base.json`: `system`, `xcode` (host Xcode build), `runtime` (Xcode build + iOS SDK), `screen-sharing`, `services`, `tools` (Homebrew, cliclick, peekaboo), `grants`, `desktop` (Finder, Xcode, DeviceHub, Terminal in the Dock; solid wallpaper), `first-launch`. Only changed steps rerun, plus `runtime` and `first-launch` after a new Xcode. The work happens on `<base>-next`, which replaces the base only when every step and the settle login succeed; a failed update leaves the base alone and resumes from the failed step next time. `run` updates an out-of-date base first unless `--no-update`.
+`prepare` runs named steps and records each step's fingerprint in `runs/base.json`: `system`, `xcode` (host Xcode build), `runtime` (Xcode build + iOS SDK), `screen-sharing`, `services`, `tools` (Homebrew, cliclick, peekaboo), `tcc-bypass`, `grants`, `desktop` (Finder, Xcode, DeviceHub, Terminal in the Dock; solid wallpaper), `first-launch`. Only changed steps rerun, plus `runtime`, `tcc-bypass` and `first-launch` after a new Xcode. The work happens on `<base>-next`, which replaces the base only when every step and the settle login succeed; a failed update leaves the base alone and resumes from the failed step next time. `run` updates an out-of-date base first unless `--no-update`.
 
 macOS runs at most two VMs at once. Starting a runner (or a prepare) stops the runner idle the longest whose lock is free, or waits.
 
 ## Permissions
 
 SIP is off in the base, so root writes both TCC databases directly (macOS 27 keeps the per-user one under `/private/var/containers/Data/ProtectedSystem/…`). SSH, Terminal, osascript, the XCTest agent, cliclick and peekaboo get Accessibility, event posting and listening, Screen Recording, Full Disk Access, Developer Tools and Apple events to System Events and Finder. The app under test starts undetermined every run (`tccutil reset All`); only services listed in `[grants.apps]` are granted.
+
+For unrestricted automation, set `[grants] bypass = true` in `macvm.toml`, or pass `--tcc-bypass` to `run`, `up`, `exec` or `screenshot`. `prepare` downloads a pinned, SHA-256-verified version of [unixzii/tcc-bypass](https://github.com/unixzii/tcc-bypass) and builds it inside the guest. It requires Apple silicon, SIP off and compatible private TCC methods (upstream verifies macOS 27.2).
+
+The bypass covers every process in that VM, including the app under test. It is enabled after permission resets, renewed before each suite and idle manual operation, and expires after at least 60 minutes (longer for a suite's timeout, up to 24 hours). `--no-tcc-bypass` overrides project configuration and disables an existing bypass so permission prompts and denial paths can be tested. Notifications still use the separate grants configuration. A busy runner keeps its current TCC mode during manual operations and rejects explicit TCC overrides until the test run finishes.
+
+```sh
+macvm prepare
+macvm run --tcc-bypass
+macvm run --no-tcc-bypass                    # test the actual permission flow
+macvm exec --tcc-bypass -- sudo /usr/local/bin/macvm-tcc-bypass status
+macvm exec --tcc-bypass -- sudo /usr/local/bin/macvm-tcc-bypass logs --snapshot
+```
+
+Only guest `tccd` processes are modified. The bypass does not persist grants to the TCC databases; stopping it or reaching its expiry restores normal checks, while its inactive hooks remain until `tccd` exits. VM shutdown removes the in-memory hooks and helper.
 
 ## Turning SIP off on a fresh base
 

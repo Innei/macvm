@@ -10,7 +10,7 @@ import sys
 import tempfile
 import time
 
-from . import config
+from . import config, tcc
 from . import status as vm_status
 from .vnc import VNC_PORT, Forwarder, exposed, pick_port, recovery_line, vnc_endpoint, vnc_line
 
@@ -309,6 +309,10 @@ def extra_command(extra, cases):
 
 
 def run_tests(guest, project, args, extras=()):
+    enabled = getattr(args, 'tcc_bypass', project.grants.bypass)
+    with vm_status.current.step('TCC mode'):
+        tcc.apply(guest, enabled, args.timeout)
+    progress('guest TCC bypass enabled' if enabled else 'guest TCC bypass disabled')
     progress('running XCUITest in the guest')
     started = time.monotonic()
     with vm_status.current.step('XCUITest'):
@@ -318,6 +322,7 @@ def run_tests(guest, project, args, extras=()):
         progress(finished.stdout.strip())
     status = finished.returncode
     for extra in extras:
+        tcc.apply(guest, enabled, args.timeout)
         progress(f'running {extra.name} in the guest')
         with vm_status.current.step(extra.name):
             outcome = guest.ssh(extra_command(extra, args.case), check=False, timeout=args.timeout).returncode

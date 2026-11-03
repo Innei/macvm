@@ -3,11 +3,33 @@ from pathlib import Path
 import tempfile
 import time
 import unittest
+from unittest import mock
 
 from macvm import guest, runner, status
 
 
 class RunnerPathsTest(unittest.TestCase):
+    def test_a_new_keeper_creates_shares_without_clearing_existing_products(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            products, output = root / 'products', root / 'out'
+            products.mkdir()
+            (products / 'keep').write_text('existing product')
+
+            def start_vm(name, shares, log):
+                log.close()
+                for directory in shares.values():
+                    if not directory.is_dir():
+                        raise FileNotFoundError(directory)
+                raise RuntimeError('VM startup reached')
+
+            with mock.patch.object(runner, 'TART_LOG', root / 'tart.log'), \
+                 mock.patch.object(runner, 'shares', return_value={'products': products, 'out': output}), \
+                 mock.patch.object(runner, 'Guest', side_effect=start_vm):
+                with self.assertRaisesRegex(RuntimeError, 'VM startup reached'):
+                    runner.keep(None)
+            self.assertEqual((products / 'keep').read_text(), 'existing product')
+
     def tearDown(self):
         runner.use('default')
 

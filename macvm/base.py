@@ -9,7 +9,7 @@ import time
 from .guest import (BASE, BASE_LOCK, SLOTS_LOCK, GUEST_PASSWORD, GUEST_USER, GUEST_XCODE, HISTORY, IPSW, IPSW_URL, KEY, SHARED, SHARED_XCODE,
                       STATUS, TART_HOME, VOLUME, XCODE, Guest, exclusive, mount, progress, tart, vms)
 from .fleet import free_slot
-from . import grants, steps
+from . import grants, steps, tcc
 from .rfb import RFB
 from . import status as vm_status
 
@@ -453,7 +453,8 @@ def simulator_sdk():
 
 def scripts():
     return {'system': SYSTEM, 'runtime': RUNTIME, 'screen-sharing': SCREEN_SHARING, 'services': service_commands(),
-            'tools': TOOLS, 'grants': GRANTS, 'desktop': DESKTOP, 'first-launch': FIRST_LAUNCH}
+            'tools': TOOLS, 'tcc-bypass': tcc.install_script(GUEST_XCODE),
+            'grants': GRANTS, 'desktop': DESKTOP, 'first-launch': FIRST_LAUNCH}
 
 
 def current_marks():
@@ -474,6 +475,7 @@ LABELS = {
     'screen-sharing': ('Screen Sharing for the loopback VNC viewer', 3600),
     'services': (f'disabling {len(SERVICES)} background services', 3600),
     'tools': (f'Homebrew with {", ".join(FORMULAE)}', 1800),
+    'tcc-bypass': ('installing the guest TCC bypass', 600),
     'grants': ('permission grants for automation clients', 600),
     'desktop': ('Dock with Xcode, DeviceHub and Terminal; solid wallpaper', 300),
     'first-launch': ('first launch of Xcode and DeviceHub', 900),

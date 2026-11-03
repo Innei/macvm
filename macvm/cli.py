@@ -94,6 +94,9 @@ def parse(argv):
 
 def attach_project(args, project=None):
     args.project = project or load_project(args)
+    args.tcc_override = args.tcc_bypass is not None
+    if args.tcc_bypass is None:
+        args.tcc_bypass = args.project.grants.bypass
     vm_runner.use(args.project.name)
     known = {extra.name: extra for extra in args.project.extras}
     unknown = [name for name in args.extra if name not in known]
@@ -217,6 +220,11 @@ def build_parser(extras=()):
     parser.add_argument('--repair-xcode', action='store_true', help='prepare: copy Xcode into the base again')
     parser.add_argument('--upgrade-tools', action='store_true', help='prepare: brew upgrade the base tools')
     parser.add_argument('--no-update', action='store_true', help='run: skip updating an out-of-date base')
+    tcc = parser.add_mutually_exclusive_group()
+    tcc.add_argument('--tcc-bypass', dest='tcc_bypass', action='store_true', default=None,
+                     help='temporarily bypass TCC for every process inside the guest')
+    tcc.add_argument('--no-tcc-bypass', dest='tcc_bypass', action='store_false',
+                     help='disable the guest TCC bypass for permission-flow tests')
     parser.add_argument('--recovery-vnc', action='store_true',
                         help="prepare: allow the recovery boot's LAN-reachable VNC server to turn SIP off")
     parser.add_argument('--cpu', type=int, default=SETTINGS.cpu)

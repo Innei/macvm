@@ -35,6 +35,7 @@ class Reset:
 class Grants:
     targets: list = field(default_factory=list)
     apps: dict = field(default_factory=dict)
+    bypass: bool = False
 
 
 @dataclass(frozen=True)
@@ -90,6 +91,9 @@ def load(path):
         raise SystemExit(f'{path}: name must be lowercase letters, digits and hyphens, got {name!r}')
     build, test = raw.get('build', {}), raw.get('test', {})
     grants = raw.get('grants', {})
+    bypass = grants.get('bypass', False)
+    if not isinstance(bypass, bool):
+        raise SystemExit(f'{path}: grants.bypass must be a boolean')
     apps = grants.get('apps', {})
     for bundle, services in apps.items():
         unknown = [service for service in services if service not in APP_SERVICES]
@@ -105,7 +109,7 @@ def load(path):
         always=list(test.get('always', [])), suite=test['suite'], cases=dict(test.get('cases', {})),
         timeout=int(test.get('timeout', 1800)),
         reset=Reset(**raw.get('reset', {})),
-        grants=Grants(targets=list(grants.get('targets', [])), apps={k: list(v) for k, v in apps.items()}),
+        grants=Grants(targets=list(grants.get('targets', [])), apps={k: list(v) for k, v in apps.items()}, bypass=bypass),
         extras=[Extra(**extra) for extra in raw.get('extra', [])],
         output=root / raw.get('output', {}).get('dir', '.artifacts/macvm'),
     )
